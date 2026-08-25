@@ -1,0 +1,41 @@
+name: Deploy to Contabo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Contabo
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.CONTABO_HOST }}
+          username: ${{ secrets.CONTABO_USER }}
+          key: ${{ secrets.CONTABO_SSH_KEY }}
+          port: 22
+
+          script: |
+            # Load NVM and Node.js
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+            # Verify Node environment
+            node -v
+            npm -v
+
+            # Go to project
+            cd /home/door2dev/AFTER9
+
+            # Pull latest code
+            git pull origin main
+
+            # Install dependencies
+            npm install
+
+            # Build project
+            npm run build
+
+            # Restart application
+            pm2 restart all
