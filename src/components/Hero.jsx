@@ -1,12 +1,12 @@
 import React from 'react';
-import { ArrowRight, Sparkles, Clock, MapPin, Zap, ShieldCheck, ShoppingBag, CheckCircle2, ChevronRight } from 'lucide-react';
-import { useCart } from '../context/CartContext';
+import { ArrowRight, Sparkles, Clock, MapPin, Zap, ShieldCheck, CheckCircle2, Compass } from 'lucide-react';
+import { useInsideHub } from '../context/InsideHubContext';
 
 export const Hero = () => {
-  const { setIsCartOpen } = useCart();
+  const { openHub } = useInsideHub();
 
   return (
-    <section className="relative min-h-[92vh] pt-32 pb-16 flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[88vh] pt-32 pb-16 flex items-center justify-center overflow-hidden">
       {/* Background ambient lighting effects */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[450px] bg-gradient-to-tr from-[#a3e635]/08 via-[#a78bfa]/08 to-transparent blur-[140px] pointer-events-none rounded-full"></div>
 
@@ -23,9 +23,12 @@ export const Hero = () => {
                 9 PM — 5/6 AM
               </span>
               <span className="text-white/20">•</span>
-              <span className="text-xs font-mono text-slate-300 flex items-center gap-1">
+              <button 
+                onClick={() => openHub('pilot')}
+                className="text-xs font-mono text-slate-300 flex items-center gap-1 hover:text-white transition-colors"
+              >
                 <MapPin className="w-3.5 h-3.5 text-[#a3e635]" /> Currently serving Greater Noida
-              </span>
+              </button>
               <span className="text-white/20 hidden sm:inline">•</span>
               <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-purple-300 bg-purple-950/60 px-2 py-0.5 rounded-full border border-purple-500/30">
                 Pilot Phase 1
@@ -52,8 +55,11 @@ export const Hero = () => {
             </p>
 
             {/* Core USP micro-callout */}
-            <div className="p-3.5 rounded-2xl bg-[#0d0d18]/80 border border-[#a3e635]/20 flex items-center gap-3 text-left max-w-xl mx-auto lg:mx-0 shadow-xl backdrop-blur-md">
-              <div className="w-10 h-10 rounded-xl bg-[#a3e635]/10 border border-[#a3e635]/30 flex items-center justify-center shrink-0">
+            <a
+              href="#open-box-usp"
+              className="p-3.5 rounded-2xl bg-[#0d0d18]/80 border border-[#a3e635]/20 flex items-center gap-3 text-left max-w-xl mx-auto lg:mx-0 shadow-xl backdrop-blur-md hover:border-[#a3e635]/50 transition-all group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-[#a3e635]/10 border border-[#a3e635]/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                 <ShieldCheck className="w-5 h-5 text-[#a3e635]" />
               </div>
               <div className="text-xs sm:text-sm">
@@ -65,25 +71,26 @@ export const Hero = () => {
                   Inspect your package right at the doorstep. Don't like it? Return it instantly.
                 </p>
               </div>
-            </div>
+            </a>
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
               <a
-                href="#categories"
+                href="#store"
                 className="w-full sm:w-auto btn-primary px-8 py-4 rounded-2xl text-sm font-extrabold uppercase tracking-wider flex items-center justify-center gap-3 shadow-lime-glow group"
               >
                 <span>ORDER AFTER 9</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </a>
 
-              <a
-                href="#drops"
+              <button
+                onClick={() => openHub('manifesto')}
                 className="w-full sm:w-auto btn-secondary px-7 py-4 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 hover:border-[#a3e635]/50"
               >
-                <span>EXPLORE MIDNIGHT DROPS</span>
-                <span className="text-xs bg-[#a3e635]/20 text-[#bef264] font-mono px-2 py-0.5 rounded-full">HOT</span>
-              </a>
+                <Compass className="w-4 h-4 text-[#a78bfa]" />
+                <span>EXPLORE THE NIGHT SHIFT</span>
+                <span className="text-xs bg-[#a3e635]/20 text-[#bef264] font-mono px-2 py-0.5 rounded-full">HUB</span>
+              </button>
             </div>
 
             {/* Micro stats counter */}
@@ -166,7 +173,7 @@ export const Hero = () => {
                   <div className="relative z-10 space-y-2">
                     
                     {/* Chip 1: Rider nearby */}
-                    <div className="bg-[#0e0e1c]/95 border border-[#a3e635]/35 p-3 rounded-xl shadow-2xl backdrop-blur-md flex items-center justify-between transform transition hover:scale-102">
+                    <div className="bg-[#0e0e1c]/95 border border-[#a3e635]/35 p-3 rounded-xl shadow-2xl backdrop-blur-md flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-[#a3e635]/15 border border-[#a3e635]/35 flex items-center justify-center">
                           <Zap className="w-4 h-4 text-[#a3e635]" />

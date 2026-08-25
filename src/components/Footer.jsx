@@ -1,9 +1,11 @@
 import React from 'react';
-import { ArrowRight, Moon } from 'lucide-react';
+import { ArrowRight, Moon, Sparkles, ShieldCheck, MapPin, Compass } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useInsideHub } from '../context/InsideHubContext';
 
 export const Footer = () => {
   const { setIsCartOpen } = useCart();
+  const { openHub } = useInsideHub();
 
   return (
     <footer className="relative bg-[#050508] border-t border-white/10 overflow-hidden">
@@ -31,13 +33,21 @@ export const Footer = () => {
             Everyday essentials, snacks, and party packs at your doorstep with open-box verification.
           </p>
 
-          <div className="pt-2">
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="#categories"
+              href="#store"
               className="inline-flex items-center gap-3 btn-primary px-10 py-5 rounded-2xl text-base font-black uppercase tracking-wider shadow-lime-glow-lg hover:scale-105 transition-all group"
             >
               <span>ORDER AFTER 9 →</span>
             </a>
+
+            <button
+              onClick={() => openHub('manifesto')}
+              className="inline-flex items-center gap-2 btn-secondary px-8 py-5 rounded-2xl text-sm font-bold hover:border-[#a3e635]/50"
+            >
+              <Compass className="w-4 h-4 text-[#a78bfa]" />
+              <span>Explore Inside Hub</span>
+            </button>
           </div>
 
           <p className="text-xs font-mono text-slate-400 tracking-wider uppercase">
@@ -70,33 +80,59 @@ export const Footer = () => {
               India's first dedicated night-commerce platform. Delivering packaged essentials, midnight cravings, and party packs during the hours everyone else sleeps.
             </p>
 
-            <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 bg-emerald-950/30 px-3 py-1.5 rounded-xl border border-emerald-500/20 max-w-fit">
+            <button 
+              onClick={() => openHub('pilot')}
+              className="flex items-center gap-2 text-xs font-mono text-emerald-400 bg-emerald-950/30 px-3 py-1.5 rounded-xl border border-emerald-500/20 hover:border-emerald-500/50 transition-all text-left"
+            >
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              Currently piloting in Greater Noida
-            </div>
+              Currently piloting in Greater Noida (Click for radar)
+            </button>
           </div>
 
           {/* Quick Links */}
           <div className="md:col-span-4 grid grid-cols-2 gap-6 text-xs font-mono">
             <div className="space-y-3">
-              <p className="text-white font-bold tracking-wider uppercase">NAVIGATION</p>
+              <p className="text-white font-bold tracking-wider uppercase">MIDNIGHT STORE</p>
               <ul className="space-y-2 text-slate-400">
-                <li><a href="#" className="hover:text-[#bef264] transition-colors">Home</a></li>
-                <li><a href="#drops" className="hover:text-[#bef264] transition-colors">Tonight's Drops</a></li>
-                <li><a href="#categories" className="hover:text-[#bef264] transition-colors">2 AM Cravings</a></li>
-                <li><a href="#party-packs" className="hover:text-[#bef264] transition-colors">Midnight Bundles</a></li>
-                <li><a href="#ten-rupee" className="hover:text-[#bef264] transition-colors">₹10 Corner</a></li>
+                <li><a href="#store" className="hover:text-[#bef264] transition-colors">All Night Drops</a></li>
+                <li><a href="#open-box-usp" className="hover:text-[#bef264] transition-colors">Open-Box Guarantee</a></li>
+                <li><a href="#coverage" className="hover:text-[#bef264] transition-colors">Greater Noida Map</a></li>
+                <li>
+                  <button onClick={() => setIsCartOpen(true)} className="hover:text-[#bef264] transition-colors text-left">
+                    View Midnight Bag
+                  </button>
+                </li>
               </ul>
             </div>
 
             <div className="space-y-3">
-              <p className="text-white font-bold tracking-wider uppercase">EXPLORE</p>
+              <p className="text-white font-bold tracking-wider uppercase">INSIDE HUB</p>
               <ul className="space-y-2 text-slate-400">
-                <li><a href="#open-box-usp" className="hover:text-[#bef264] transition-colors">Open-Box USP</a></li>
-                <li><a href="#coverage" className="hover:text-[#bef264] transition-colors">Pilot Zones</a></li>
-                <li><a href="#" className="hover:text-[#bef264] transition-colors">Contact</a></li>
-                <li><a href="#" className="hover:text-[#bef264] transition-colors">Terms of Pilot</a></li>
-                <li><a href="#" className="hover:text-[#bef264] transition-colors">Privacy Policy</a></li>
+                <li>
+                  <button onClick={() => openHub('manifesto')} className="hover:text-[#bef264] transition-colors text-left">
+                    🌙 9 PM-6 AM Shift & Story
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => openHub('trust')} className="hover:text-[#bef264] transition-colors text-left">
+                    🛡️ Open-Box & Trust Guide
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => openHub('trust')} className="hover:text-[#bef264] transition-colors text-left">
+                    📱 App Experience Screens
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => openHub('chat')} className="hover:text-[#bef264] transition-colors text-left">
+                    💬 2 AM Group Chat
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => openHub('pilot')} className="hover:text-[#bef264] transition-colors text-left">
+                    📍 Sector Radar & Waitlist
+                  </button>
+                </li>
               </ul>
             </div>
           </div>
@@ -159,14 +195,21 @@ export const Footer = () => {
       </div>
 
       {/* MOBILE STICKY BOTTOM CTA */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 p-3 bg-[#06060a]/90 backdrop-blur-xl border-t border-white/10">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 p-3 bg-[#06060a]/90 backdrop-blur-xl border-t border-white/10 flex gap-2">
         <a
-          href="#categories"
-          className="w-full btn-primary py-3.5 rounded-2xl text-center flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest shadow-lime-glow"
+          href="#store"
+          className="flex-1 btn-primary py-3.5 rounded-2xl text-center flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest shadow-lime-glow"
         >
           <Moon className="w-4 h-4" />
-          <span>ORDER AFTER 9 (PILOT LIVE)</span>
+          <span>ORDER AFTER 9</span>
         </a>
+        <button
+          onClick={() => openHub('manifesto')}
+          className="btn-secondary px-3.5 py-3.5 rounded-2xl text-xs font-bold"
+          title="Inside Hub"
+        >
+          <Compass className="w-4 h-4 text-[#a78bfa]" />
+        </button>
       </div>
 
     </footer>
