@@ -6,6 +6,7 @@ import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { OpenBoxUSP } from './components/OpenBoxUSP';
 import { ProductCatalog } from './components/ProductCatalog';
+import { NightHouseTransition } from './components/NightHouseTransition';
 import { PilotZone } from './components/PilotZone';
 import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
@@ -89,7 +90,10 @@ function AppContent() {
         {/* 3. Unified Midnight Store (Drops, ₹10 Corner, Bundles, Cravings) */}
         <ProductCatalog />
 
-        {/* 4. Pilot Coverage: Greater Noida Radar & Waitlist */}
+        {/* 4. Animated NightHouse Atmospheric Simulation */}
+        <NightHouseTransition />
+
+        {/* 5. Pilot Coverage: Greater Noida Radar & Waitlist */}
         <PilotZone />
       </main>
 
