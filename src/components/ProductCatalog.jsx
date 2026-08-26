@@ -9,8 +9,7 @@ import {
 
 export const ProductCatalog = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const { addToCart, cart, updateQuantity } = useCart();
+  const { addToCart, cart, updateQuantity, searchQuery, setSearchQuery } = useCart();
   const { openHub } = useInsideHub();
 
   const getItemQuantityInCart = (id) => {

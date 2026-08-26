@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Moon, Clock, MapPin, Menu, X, ShieldCheck, Zap, Sparkles, Compass } from 'lucide-react';
+import { ShoppingBag, Moon, Clock, MapPin, Menu, X, ShieldCheck, Zap, Sparkles, Compass, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useInsideHub } from '../context/InsideHubContext';
 
 export const Navbar = () => {
-  const { totalItemsCount, setIsCartOpen } = useCart();
+  const { totalItemsCount, setIsCartOpen, searchQuery, setSearchQuery } = useCart();
   const { openHub } = useInsideHub();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -27,11 +27,22 @@ export const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+    if (val.trim()) {
+      const storeEl = document.getElementById('store');
+      if (storeEl && window.scrollY < storeEl.offsetTop - 200) {
+        storeEl.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   return (
     <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
       isScrolled 
-        ? 'bg-[#06060a]/90 backdrop-blur-xl border-b border-white/[0.08] shadow-2xl py-3' 
-        : 'bg-transparent py-4'
+        ? 'bg-[#06060a]/95 backdrop-blur-xl border-b border-white/[0.08] shadow-2xl py-2.5' 
+        : 'bg-[#06060a]/60 backdrop-blur-md py-3'
     }`}>
       {/* Top micro-banner for operating hours & pilot */}
       <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto px-6 mb-2 text-xs font-mono">
@@ -47,7 +58,7 @@ export const Navbar = () => {
             className="flex items-center gap-1 text-slate-300 hover:text-[#bef264] transition-colors"
           >
             <MapPin className="w-3.5 h-3.5 text-[#a3e635]" />
-            PILOT ZONE: <strong className="text-white underline decoration-dotted">GREATER NOIDA</strong>
+            PILOT: <strong className="text-white underline decoration-dotted">GREATER NOIDA</strong>
           </button>
         </div>
         <div className="flex items-center gap-4 text-slate-400">
@@ -59,14 +70,14 @@ export const Navbar = () => {
             onClick={() => openHub('trust')}
             className="text-emerald-400 flex items-center gap-1 hover:underline"
           >
-            <ShieldCheck className="w-3.5 h-3.5" /> Open-Box Doorstep Verification
+            <ShieldCheck className="w-3.5 h-3.5" /> Open-Box Verification
           </button>
         </div>
       </div>
 
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3">
         {/* Brand Logo with distinctive stylized '9' symbol */}
-        <a href="#" className="flex items-center gap-2.5 group">
+        <a href="#" className="flex items-center gap-2 group shrink-0">
           <div className="relative flex items-center">
             <span className="font-display font-black text-2xl tracking-tighter text-white uppercase group-hover:text-slate-100 transition-colors">
               AFTER
@@ -77,41 +88,59 @@ export const Navbar = () => {
               </span>
             </span>
           </div>
-          <span className="hidden sm:inline-block text-[10px] font-mono uppercase tracking-widest text-[#a78bfa] bg-[#a78bfa]/10 px-2 py-0.5 rounded border border-[#a78bfa]/30">
+          <span className="hidden xl:inline-block text-[10px] font-mono uppercase tracking-widest text-[#a78bfa] bg-[#a78bfa]/10 px-2 py-0.5 rounded border border-[#a78bfa]/30">
             Night Commerce
           </span>
         </a>
 
+        {/* TOP SEARCH BAR (Desktop & Tablet) */}
+        <div className="hidden sm:flex items-center flex-1 max-w-md mx-2">
+          <div className="relative w-full">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Search chips, ₹10 spices, Red Bull, eggs..."
+              className="w-full bg-[#11111e] border border-white/15 focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635] text-xs font-mono text-white placeholder-slate-500 rounded-full pl-10 pr-8 py-2.5 outline-none transition-all shadow-inner"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Desktop Navigation Links */}
-        <div className="hidden lg:flex items-center gap-1 bg-[#0f0f1c]/80 border border-white/[0.08] px-3 py-1.5 rounded-full backdrop-blur-md">
-          <a href="#store" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-[#bef264] hover:bg-white/[0.04] transition-all">
-            🌙 Midnight Store
+        <div className="hidden lg:flex items-center gap-1 bg-[#0f0f1c]/80 border border-white/[0.08] px-2.5 py-1.5 rounded-full backdrop-blur-md shrink-0">
+          <a href="#store" className="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-[#bef264] hover:bg-white/[0.04] transition-all">
+            🌙 Store
           </a>
-          <a href="#open-box-usp" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#a3e635] hover:bg-[#a3e635]/10 transition-all flex items-center gap-1">
-            <ShieldCheck className="w-3 h-3" /> Open-Box USP
+          <a href="#open-box-usp" className="px-3 py-1.5 rounded-full text-xs font-semibold text-[#a3e635] hover:bg-[#a3e635]/10 transition-all flex items-center gap-1">
+            <ShieldCheck className="w-3 h-3" /> Open-Box
           </a>
-          <a href="#coverage" className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-[#bef264] hover:bg-white/[0.04] transition-all">
-            📍 Greater Noida Pilot
-          </a>
-          <span className="text-white/15 px-1">|</span>
           <button
             onClick={() => openHub('manifesto')}
-            className="px-3.5 py-1.5 rounded-full text-xs font-mono font-bold text-purple-300 hover:text-white hover:bg-purple-950/50 transition-all flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-full text-xs font-mono font-bold text-purple-300 hover:text-white hover:bg-purple-950/50 transition-all flex items-center gap-1"
           >
-            <Compass className="w-3.5 h-3.5 text-[#a78bfa]" />
+            <Compass className="w-3 h-3 text-[#a78bfa]" />
             Inside Hub
           </button>
         </div>
 
         {/* Right CTAs: Cart Drawer trigger + Quick Order */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 shrink-0">
           <button
             onClick={() => setIsCartOpen(true)}
-            className="relative flex items-center gap-2 bg-[#121220] hover:bg-[#18182a] text-white px-3.5 py-2 rounded-xl border border-white/10 hover:border-[#a3e635]/50 transition-all shadow-md group"
+            className="relative flex items-center gap-2 bg-[#121220] hover:bg-[#18182a] text-white px-3 py-2 rounded-xl border border-white/10 hover:border-[#a3e635]/50 transition-all shadow-md group"
             aria-label="Open Midnight Cart"
           >
             <ShoppingBag className="w-4 h-4 text-[#a3e635] group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-bold font-mono tracking-wide hidden sm:inline">MIDNIGHT BAG</span>
+            <span className="text-xs font-bold font-mono tracking-wide hidden md:inline">BAG</span>
             <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-black font-mono bg-[#a3e635] text-[#06060a] rounded-full shadow-sm">
               {totalItemsCount}
             </span>
@@ -119,10 +148,10 @@ export const Navbar = () => {
 
           <a
             href="#store"
-            className="hidden sm:inline-flex items-center gap-2 btn-primary px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider"
+            className="hidden sm:inline-flex items-center gap-1.5 btn-primary px-3.5 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider"
           >
-            <Zap className="w-3.5 h-3.5 fill-current" />
-            Order After 9
+            <Zap className="w-3 h-3 fill-current" />
+            Order Now
           </a>
 
           {/* Mobile hamburger menu toggle */}
@@ -136,36 +165,57 @@ export const Navbar = () => {
         </div>
       </nav>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile Drawer Menu with Mobile Search */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-[#080810]/98 backdrop-blur-2xl border-b border-white/10 px-6 py-6 space-y-4 animate-in slide-in-from-top duration-200">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
-            <span className="text-xs font-mono text-[#a3e635] flex items-center gap-1.5">
+        <div className="lg:hidden bg-[#080810]/98 backdrop-blur-2xl border-b border-white/10 px-4 py-5 space-y-4 animate-in slide-in-from-top duration-200">
+          
+          {/* Mobile Search Bar */}
+          <div className="relative w-full">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Search chips, ₹10 spices, Red Bull..."
+              className="w-full bg-[#121222] border border-white/20 text-xs font-mono text-white placeholder-slate-500 rounded-xl pl-9 pr-8 py-3 outline-none focus:border-[#a3e635]"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between pb-3 border-b border-white/10 text-xs font-mono">
+            <span className="text-[#a3e635] flex items-center gap-1.5 font-bold">
               <span className="w-2 h-2 rounded-full bg-[#a3e635] animate-pulse"></span>
               9 PM — 6 AM • PILOT LIVE
             </span>
-            <span className="text-xs font-mono text-slate-400">Greater Noida</span>
+            <span className="text-slate-400">Greater Noida</span>
           </div>
           
           <div className="grid grid-cols-2 gap-2 text-sm font-semibold">
             <a
               href="#store"
               onClick={() => setMobileMenuOpen(false)}
-              className="p-3 bg-[#10101c] rounded-xl text-slate-200 hover:text-[#bef264] flex items-center gap-2"
+              className="p-3 bg-[#10101c] rounded-xl text-slate-200 hover:text-[#bef264] flex items-center gap-2 text-xs"
             >
               🌙 Midnight Store
             </a>
             <a
               href="#open-box-usp"
               onClick={() => setMobileMenuOpen(false)}
-              className="p-3 bg-[#10101c] rounded-xl text-[#a3e635] flex items-center gap-2"
+              className="p-3 bg-[#10101c] rounded-xl text-[#a3e635] flex items-center gap-2 text-xs"
             >
               <ShieldCheck className="w-4 h-4" /> Open-Box USP
             </a>
             <a
               href="#coverage"
               onClick={() => setMobileMenuOpen(false)}
-              className="p-3 bg-[#10101c] rounded-xl text-slate-200 flex items-center gap-2"
+              className="p-3 bg-[#10101c] rounded-xl text-slate-200 flex items-center gap-2 text-xs"
             >
               📍 Greater Noida Map
             </a>
@@ -174,9 +224,9 @@ export const Navbar = () => {
                 setMobileMenuOpen(false);
                 openHub('manifesto');
               }}
-              className="p-3 bg-purple-950/40 text-purple-300 rounded-xl flex items-center gap-2 text-left"
+              className="p-3 bg-purple-950/40 text-purple-300 rounded-xl flex items-center gap-2 text-left text-xs"
             >
-              <Sparkles className="w-4 h-4 text-[#a3e635]" /> Inside Hub & Story
+              <Sparkles className="w-4 h-4 text-[#a3e635]" /> Inside Hub
             </button>
           </div>
 

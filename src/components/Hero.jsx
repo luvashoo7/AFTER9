@@ -1,9 +1,19 @@
 import React from 'react';
-import { ArrowRight, Sparkles, Clock, MapPin, Zap, ShieldCheck, CheckCircle2, Compass } from 'lucide-react';
+import { ArrowRight, Sparkles, Clock, MapPin, Zap, ShieldCheck, CheckCircle2, Compass, Search } from 'lucide-react';
 import { useInsideHub } from '../context/InsideHubContext';
+import { useCart } from '../context/CartContext';
 
 export const Hero = () => {
   const { openHub } = useInsideHub();
+  const { searchQuery, setSearchQuery } = useCart();
+
+  const handleQuickSearch = (term) => {
+    setSearchQuery(term);
+    const storeEl = document.getElementById('store');
+    if (storeEl) {
+      storeEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <section className="relative min-h-[88vh] pt-32 pb-16 flex items-center justify-center overflow-hidden">
@@ -13,8 +23,8 @@ export const Hero = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           
-          {/* Left Column: Headlines, Gen-Z copy, and CTAs */}
-          <div className="lg:col-span-7 space-y-7 text-center lg:text-left">
+          {/* Left Column: Headlines, Search Bar, and CTAs */}
+          <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             
             {/* Pill badges */}
             <div className="inline-flex flex-wrap items-center justify-center lg:justify-start gap-2 bg-[#0f0f1c] border border-white/10 px-4 py-2 rounded-full shadow-lg backdrop-blur-md">
@@ -54,6 +64,63 @@ export const Hero = () => {
               <span className="text-white font-semibold">Delivered instantly while the city sleeps.</span>
             </p>
 
+            {/* TOP SEARCH BAR (Prominent in Hero) */}
+            <div className="space-y-2.5 max-w-xl mx-auto lg:mx-0">
+              <div className="relative">
+                <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    const storeEl = document.getElementById('store');
+                    if (storeEl && e.target.value.trim()) {
+                      storeEl.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  placeholder="Search snacks, ₹10 spices, Red Bull, eggs, condoms..."
+                  className="w-full bg-[#0f0f20]/95 border-2 border-white/15 focus:border-[#a3e635] text-sm font-mono text-white placeholder-slate-500 rounded-2xl pl-12 pr-10 py-4 outline-none shadow-2xl backdrop-blur-xl transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 hover:text-white"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Quick Suggestion Pills */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 text-[11px] font-mono text-slate-400">
+                <span className="text-slate-500">Popular:</span>
+                <button
+                  onClick={() => handleQuickSearch('Shin Ramyun')}
+                  className="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 hover:text-[#bef264] transition-colors"
+                >
+                  🍜 Shin Ramyun
+                </button>
+                <button
+                  onClick={() => handleQuickSearch('Red Bull')}
+                  className="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 hover:text-[#bef264] transition-colors"
+                >
+                  ⚡ Red Bull
+                </button>
+                <button
+                  onClick={() => handleQuickSearch('Chaat Masala')}
+                  className="px-2 py-0.5 rounded-lg bg-[#a3e635]/10 text-[#bef264] hover:bg-[#a3e635]/20 transition-colors"
+                >
+                  🪙 ₹10 Spices
+                </button>
+                <button
+                  onClick={() => handleQuickSearch('Eggs')}
+                  className="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 hover:text-[#bef264] transition-colors"
+                >
+                  🍳 Eggs
+                </button>
+              </div>
+            </div>
+
             {/* Core USP micro-callout */}
             <a
               href="#open-box-usp"
@@ -74,12 +141,12 @@ export const Hero = () => {
             </a>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-1">
               <a
                 href="#store"
                 className="w-full sm:w-auto btn-primary px-8 py-4 rounded-2xl text-sm font-extrabold uppercase tracking-wider flex items-center justify-center gap-3 shadow-lime-glow group"
               >
-                <span>ORDER AFTER 9</span>
+                <span>EXPLORE MIDNIGHT STORE</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </a>
 
@@ -101,11 +168,11 @@ export const Hero = () => {
               </div>
               <div>
                 <p className="font-display font-black text-2xl text-[#bef264]">10-15m</p>
-                <p className="text-[11px] font-mono text-slate-400 uppercase">Instant Doorstep ETA</p>
+                <p className="text-[11px] font-mono text-slate-400 uppercase">Doorstep ETA</p>
               </div>
               <div>
                 <p className="font-display font-black text-2xl text-[#a78bfa]">100%</p>
-                <p className="text-[11px] font-mono text-slate-400 uppercase">Open-Box Guarantee</p>
+                <p className="text-[11px] font-mono text-slate-400 uppercase">Open-Box Return</p>
               </div>
             </div>
 

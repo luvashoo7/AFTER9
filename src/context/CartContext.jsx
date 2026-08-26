@@ -9,6 +9,7 @@ export const CartProvider = ({ children }) => {
   const [promoCode, setPromoCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [promoMessage, setPromoMessage] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null);
   const [toast, setToast] = useState(null);
@@ -140,7 +141,9 @@ export const CartProvider = ({ children }) => {
         activeOrder,
         setActiveOrder,
         placeOrder,
-        showToast
+        showToast,
+        searchQuery,
+        setSearchQuery
       }}
     >
       {children}
