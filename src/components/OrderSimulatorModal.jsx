@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
-import { X, ShieldCheck, Clock, RotateCcw, Zap, Check } from 'lucide-react';
+import { X, ShieldCheck, Clock, RotateCcw, Zap, Check, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export const OrderSimulatorModal = () => {
-  const { activeOrder, isCheckoutModalOpen, setIsCheckoutModalOpen } = useCart();
+  const { activeOrder, isCheckoutModalOpen, setIsCheckoutModalOpen, processDoorstepReturn } = useCart();
   const [orderStage, setOrderStage] = useState('assigned'); // 'assigned', 'on_way', 'doorstep_inspect', 'completed', 'returned'
 
   useEffect(() => {
     if (!isCheckoutModalOpen) return;
+
+    setOrderStage('assigned');
 
     const timer1 = setTimeout(() => {
       setOrderStage('on_way');
@@ -32,13 +34,18 @@ export const OrderSimulatorModal = () => {
       particleCount: 80,
       spread: 70,
       origin: { y: 0.6 },
-      colors: ['#a3e635', '#10b981', '#ffffff', '#a78bfa']
+      colors: ['#a3e635', '#10b981', '#ffffff', '#a78bfa'],
     });
   };
 
   const handleReturnDoorstep = () => {
+    processDoorstepReturn('Customer returned entire order during doorstep inspection');
     setOrderStage('returned');
   };
+
+  const returnDeliveryCharge = 29;
+  const productSubtotal = activeOrder.subtotal || 0;
+  const calculatedRefund = Math.max(0, productSubtotal - (activeOrder.discount || 0));
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl">
@@ -61,10 +68,10 @@ export const OrderSimulatorModal = () => {
             </span>
           </div>
           <h3 className="font-display font-black text-2xl text-white uppercase tracking-tight">
-            Order #{activeOrder.orderId}
+            Order #{activeOrder.orderId || activeOrder.id}
           </h3>
           <p className="text-xs font-mono text-slate-400">
-            Greater Noida Pilot Zone • Doorstep Open-Box Active
+            {activeOrder.sector || 'Greater Noida Pilot Zone'} • Doorstep Open-Box Active
           </p>
         </div>
 
@@ -121,16 +128,16 @@ export const OrderSimulatorModal = () => {
                 <p className="text-xs font-mono font-black text-[#bef264] uppercase">
                   📦 RIDER HAS ARRIVED AT YOUR DOORSTEP!
                 </p>
-                <p className="text-xs text-slate-300">
-                  Please open the package and inspect your items before accepting.
+                <p className="text-xs text-slate-300 font-mono">
+                  Please unseal and inspect items with rider before accepting or paying.
                 </p>
               </div>
 
               {/* Order Items Inspection Summary */}
               <div className="max-h-40 overflow-y-auto space-y-2 p-3 rounded-2xl bg-[#0e0e1a] border border-white/10">
-                {activeOrder.items.map((item, idx) => (
+                {activeOrder.items?.map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-slate-200">{item.quantity}x {item.name || item.title}</span>
+                    <span className="text-slate-200">{item.qty || item.quantity}x {item.name || item.title}</span>
                     <span className="text-[#bef264]">Verified Fresh ✓</span>
                   </div>
                 ))}
@@ -151,7 +158,7 @@ export const OrderSimulatorModal = () => {
                   className="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold text-xs py-3 rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2"
                 >
                   <RotateCcw className="w-4 h-4 text-rose-400" />
-                  RETURN TO RIDER (INSTANT DOORSTEP REVERSAL)
+                  RETURN ENTIRE ORDER TO RIDER
                 </button>
               </div>
             </div>
@@ -178,18 +185,38 @@ export const OrderSimulatorModal = () => {
             </div>
           )}
 
-          {/* STAGE 5: RETURNED */}
+          {/* STAGE 5: RETURNED (WITH DELIVERY RETURN FEE DETAILS) */}
           {orderStage === 'returned' && (
-            <div className="text-center space-y-4 py-4 animate-in zoom-in-95">
+            <div className="text-center space-y-4 py-4 animate-in zoom-in-95 font-mono">
               <div className="w-16 h-16 rounded-full bg-rose-500/20 border-2 border-rose-500 text-rose-400 flex items-center justify-center mx-auto">
                 <RotateCcw className="w-8 h-8 stroke-[2.5]" />
               </div>
-              <div>
+              <div className="space-y-1">
                 <p className="font-display font-black text-2xl text-white uppercase">Instant Return Processed!</p>
-                <p className="text-xs text-slate-300 font-mono mt-1">
-                  Package handed back to the rider on the spot. 100% refund initiated to source.
+                <p className="text-xs text-slate-300">
+                  Package handed back to rider. ₹{calculatedRefund} refund credited to source in 90 seconds.
                 </p>
               </div>
+
+              {/* Transparent Delivery Return Charge Notice */}
+              <div className="p-4 rounded-2xl bg-[#121224] border border-white/10 text-left space-y-1.5 text-xs">
+                <div className="flex justify-between text-slate-300">
+                  <span>Product Items Refunded:</span>
+                  <span className="text-emerald-400 font-bold">₹{productSubtotal} (100%)</span>
+                </div>
+                <div className="flex justify-between text-rose-300">
+                  <span>Rider Midnight Trip Transit Fee:</span>
+                  <span>-₹{returnDeliveryCharge}</span>
+                </div>
+                <div className="pt-1.5 border-t border-white/10 flex justify-between text-white font-bold">
+                  <span>Net Reversal to UPI:</span>
+                  <span className="text-[#a3e635]">₹{calculatedRefund}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 pt-1 leading-normal italic">
+                  *Nominal ₹29 delivery return charge is retained to fairly compensate our electric rider for midnight transit.
+                </p>
+              </div>
+
               <button
                 onClick={() => setIsCheckoutModalOpen(false)}
                 className="btn-secondary px-8 py-3 rounded-xl text-xs font-mono"

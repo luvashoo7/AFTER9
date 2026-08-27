@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CartProvider } from './context/CartContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { WishlistProvider } from './context/WishlistContext';
 import { InsideHubProvider, useInsideHub } from './context/InsideHubContext';
 import { NightSkyBackground } from './components/NightSkyBackground';
 import { Navbar } from './components/Navbar';
@@ -12,12 +14,26 @@ import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
 import { OrderSimulatorModal } from './components/OrderSimulatorModal';
 import { InsideHubModal } from './components/InsideHubModal';
-import { Volume2, VolumeX, Sparkles, Compass } from 'lucide-react';
+import { LoginModal } from './components/LoginModal';
+import { AddressModal } from './components/AddressModal';
+import { PaymentModal } from './components/PaymentModal';
+import { OrderHistoryModal } from './components/OrderHistoryModal';
+import { ProfileEditModal } from './components/ProfileEditModal';
+import { NotificationsModal } from './components/NotificationsModal';
+import { WishlistModal } from './components/WishlistModal';
+import { RefundsModal } from './components/RefundsModal';
+import { HelpSupportModal } from './components/HelpSupportModal';
+import { GeneralInfoModal } from './components/GeneralInfoModal';
+import { ProductDetailModal } from './components/ProductDetailModal';
+import { ShareAppModal } from './components/ShareAppModal';
+import { AboutUsModal } from './components/AboutUsModal';
+import { Volume2, VolumeX, Sparkles, Compass, ShieldCheck } from 'lucide-react';
 
 function AppContent() {
   const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
   const [ambientSound, setAmbientSound] = useState(false);
   const { openHub } = useInsideHub();
+  const { setIsAddressModalOpen, setIsAboutModalOpen } = useAuth();
 
   // Subtle cursor moonlight follower
   useEffect(() => {
@@ -50,7 +66,7 @@ function AppContent() {
       <div className="fixed bottom-6 left-6 z-40 hidden md:flex items-center gap-2.5 bg-[#0e0e18]/90 backdrop-blur-xl border border-white/10 px-3.5 py-2 rounded-2xl shadow-2xl text-xs font-mono text-slate-300">
         <div className="w-2 h-2 rounded-full bg-[#a3e635] animate-pulse"></div>
         <button
-          onClick={() => openHub('pilot')}
+          onClick={() => setIsAddressModalOpen(true)}
           className="hover:text-white transition-colors"
           title="View Pilot Zones"
         >
@@ -67,11 +83,19 @@ function AppContent() {
         </button>
         <span className="text-white/20">|</span>
         <button
+          onClick={() => setIsAboutModalOpen(true)}
+          className="flex items-center gap-1 text-slate-400 hover:text-[#bef264] transition-colors"
+          title="About Us"
+        >
+          <span>About</span>
+        </button>
+        <span className="text-white/20">|</span>
+        <button
           onClick={() => setAmbientSound(!ambientSound)}
           className="flex items-center gap-1 text-slate-400 hover:text-[#bef264] transition-colors"
           title="Toggle Night Synth Vibe"
         >
-          {ambientSound ? <Volume2 className="w-3.5 h-3.5 text-[#a3e635]" /> : <VolumeX className="w-3.5 h-3.5" />}
+          {ambientSound ? <Volume2 className="w-3.5 h-3.5 text-[#a3e635]" /> : <VolumeX className="w-3.5 h-3.5 text-slate-500" />}
           <span>{ambientSound ? 'Synth: ON' : 'Synth: OFF'}</span>
         </button>
       </div>
@@ -87,7 +111,7 @@ function AppContent() {
         {/* 2. Flagship USP Spotlight: "OPEN. CHECK. ACCEPT." Doorstep Simulator */}
         <OpenBoxUSP />
 
-        {/* 3. Unified Midnight Store (Drops, ₹10 Corner, Bundles, Cravings) */}
+        {/* 3. Unified Midnight Store (Drops, ₹10 Corner, Bundles, Cravings, Sorting, Filtering) */}
         <ProductCatalog />
 
         {/* 4. Animated NightHouse Atmospheric Simulation */}
@@ -97,7 +121,7 @@ function AppContent() {
         <PilotZone />
       </main>
 
-      {/* 5. Footer & Final Unforgettable CTA */}
+      {/* 6. Footer & Final Unforgettable CTA */}
       <Footer />
 
       {/* Grouped Inside Hub (Night Shift, Trust Guide, 2 AM Group Chat, Pilot Radar) */}
@@ -109,17 +133,38 @@ function AppContent() {
       {/* Live Order Dispatch & Inspection Simulator Modal */}
       <OrderSimulatorModal />
 
+      {/* Authentication & Profile Modals */}
+      <LoginModal />
+      <AddressModal />
+      <PaymentModal />
+      <OrderHistoryModal />
+      <ProfileEditModal />
+
+      {/* Nocturnal Engagement & Trust Modals */}
+      <NotificationsModal />
+      <WishlistModal />
+      <RefundsModal />
+      <HelpSupportModal />
+      <GeneralInfoModal />
+      <ProductDetailModal />
+      <ShareAppModal />
+      <AboutUsModal />
+
     </div>
   );
 }
 
 export function App() {
   return (
-    <CartProvider>
-      <InsideHubProvider>
-        <AppContent />
-      </InsideHubProvider>
-    </CartProvider>
+    <AuthProvider>
+      <WishlistProvider>
+        <CartProvider>
+          <InsideHubProvider>
+            <AppContent />
+          </InsideHubProvider>
+        </CartProvider>
+      </WishlistProvider>
+    </AuthProvider>
   );
 }
 

@@ -1,11 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Moon, Clock, MapPin, Menu, X, ShieldCheck, Zap, Sparkles, Compass, Search } from 'lucide-react';
+import { 
+  ShoppingBag, Moon, Clock, MapPin, Menu, X, ShieldCheck, 
+  Zap, Sparkles, Compass, Search, Heart, Bell, User, Gift, Info, HelpCircle 
+} from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
 import { useInsideHub } from '../context/InsideHubContext';
 
 export const Navbar = () => {
-  const { totalItemsCount, setIsCartOpen, searchQuery, setSearchQuery } = useCart();
+  const { 
+    totalItemsCount, setIsCartOpen, searchQuery, setSearchQuery, 
+    unreadNotificationsCount, setIsPaymentModalOpen 
+  } = useCart();
+  const { 
+    user, activeAddress, setIsAddressModalOpen, setIsAuthModalOpen, 
+    setIsProfileModalOpen, setIsOrdersModalOpen, setIsNotificationsModalOpen, 
+    setIsShareModalOpen, setIsAboutModalOpen, setIsHelpModalOpen, openInfoModal 
+  } = useAuth();
+  const { wishlistCount, setIsWishlistModalOpen } = useWishlist();
   const { openHub } = useInsideHub();
+
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState('02:17:42 AM');
@@ -38,14 +53,22 @@ export const Navbar = () => {
     }
   };
 
+  const handleUserClick = () => {
+    if (user?.isLoggedIn) {
+      setIsProfileModalOpen(true);
+    } else {
+      setIsAuthModalOpen(true);
+    }
+  };
+
   return (
     <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
       isScrolled 
-        ? 'bg-[#06060a]/95 backdrop-blur-xl border-b border-white/[0.08] shadow-2xl py-2.5' 
-        : 'bg-[#06060a]/60 backdrop-blur-md py-3'
+        ? 'bg-[#06060a]/95 backdrop-blur-xl border-b border-white/[0.08] shadow-2xl py-2' 
+        : 'bg-[#06060a]/75 backdrop-blur-md py-2.5'
     }`}>
-      {/* Top micro-banner for operating hours & pilot */}
-      <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto px-6 mb-2 text-xs font-mono">
+      {/* Top micro-banner for operating hours, address & pilot */}
+      <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto px-6 mb-1.5 text-xs font-mono">
         <div className="flex items-center gap-3 text-slate-400">
           <span className="flex items-center gap-1.5 text-[#a3e635] font-medium">
             <span className="w-2 h-2 rounded-full bg-[#a3e635] animate-ping"></span>
@@ -54,23 +77,25 @@ export const Navbar = () => {
           </span>
           <span className="text-white/20">|</span>
           <button 
-            onClick={() => openHub('pilot')}
+            onClick={() => setIsAddressModalOpen(true)}
             className="flex items-center gap-1 text-slate-300 hover:text-[#bef264] transition-colors"
+            title="Change Delivery Sector"
           >
             <MapPin className="w-3.5 h-3.5 text-[#a3e635]" />
-            PILOT: <strong className="text-white underline decoration-dotted">GREATER NOIDA</strong>
+            <span>DROP: <strong className="text-white underline decoration-dotted">{activeAddress?.sector || 'Pari Chowk Hub'}</strong></span>
           </button>
         </div>
+
         <div className="flex items-center gap-4 text-slate-400">
           <span className="flex items-center gap-1.5 bg-[#10101c] px-2.5 py-0.5 rounded-full border border-white/10 text-slate-300">
             <Clock className="w-3 h-3 text-[#a78bfa]" />
             NIGHT CLOCK: <span className="text-[#bef264] font-bold">{currentTime}</span>
           </span>
           <button 
-            onClick={() => openHub('trust')}
+            onClick={() => openInfoModal('openbox')}
             className="text-emerald-400 flex items-center gap-1 hover:underline"
           >
-            <ShieldCheck className="w-3.5 h-3.5" /> Open-Box Verification
+            <ShieldCheck className="w-3.5 h-3.5" /> 100% Open-Box Inspection
           </button>
         </div>
       </div>
@@ -93,47 +118,89 @@ export const Navbar = () => {
           </span>
         </a>
 
-        {/* TOP SEARCH BAR (Desktop & Tablet) */}
-        <div className="hidden sm:flex items-center flex-1 max-w-md mx-2">
-          <div className="relative w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              placeholder="Search chips, ₹10 spices, Red Bull, eggs..."
-              className="w-full bg-[#11111e] border border-white/15 focus:border-[#a3e635] focus:ring-1 focus:ring-[#a3e635] text-xs font-mono text-white placeholder-slate-500 rounded-full pl-10 pr-8 py-2.5 outline-none transition-all shadow-inner"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
-
         {/* Desktop Navigation Links */}
         <div className="hidden lg:flex items-center gap-1 bg-[#0f0f1c]/80 border border-white/[0.08] px-2.5 py-1.5 rounded-full backdrop-blur-md shrink-0">
-          <a href="#store" className="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-[#bef264] hover:bg-white/[0.04] transition-all">
+          <a href="#store" className="px-3 py-1 rounded-full text-xs font-semibold text-slate-300 hover:text-[#bef264] hover:bg-white/[0.04] transition-all">
             🌙 Store
           </a>
-          <a href="#open-box-usp" className="px-3 py-1.5 rounded-full text-xs font-semibold text-[#a3e635] hover:bg-[#a3e635]/10 transition-all flex items-center gap-1">
-            <ShieldCheck className="w-3 h-3" /> Open-Box
-          </a>
+          <button
+            onClick={() => setIsPaymentModalOpen(true)}
+            className="px-3 py-1 rounded-full text-xs font-semibold text-[#bef264] hover:bg-[#a3e635]/15 transition-all flex items-center gap-1"
+          >
+            💳 Payment
+          </button>
+          <button
+            onClick={() => setIsOrdersModalOpen(true)}
+            className="px-3 py-1 rounded-full text-xs font-semibold text-slate-300 hover:text-[#bef264] hover:bg-white/[0.04] transition-all"
+          >
+            Orders
+          </button>
+          <button
+            onClick={() => setIsShareModalOpen(true)}
+            className="px-3 py-1 rounded-full text-xs font-semibold text-purple-300 hover:text-white hover:bg-purple-950/40 transition-all flex items-center gap-1"
+          >
+            <Gift className="w-3 h-3 text-[#a78bfa]" />
+            Refer & ₹50
+          </button>
+          <button
+            onClick={() => setIsAboutModalOpen(true)}
+            className="px-3 py-1 rounded-full text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/[0.04] transition-all"
+          >
+            About Us
+          </button>
           <button
             onClick={() => openHub('manifesto')}
-            className="px-3 py-1.5 rounded-full text-xs font-mono font-bold text-purple-300 hover:text-white hover:bg-purple-950/50 transition-all flex items-center gap-1"
+            className="px-3 py-1 rounded-full text-xs font-mono font-bold text-purple-300 hover:text-white hover:bg-purple-950/40 transition-all flex items-center gap-1"
           >
             <Compass className="w-3 h-3 text-[#a78bfa]" />
             Inside Hub
           </button>
         </div>
 
-        {/* Right CTAs: Cart Drawer trigger + Quick Order */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        {/* Right CTAs: Wishlist, Notifications, Auth Avatar, Cart */}
+        <div className="flex items-center gap-2 shrink-0">
+          
+          {/* Wishlist Stash Button */}
+          <button
+            onClick={() => setIsWishlistModalOpen(true)}
+            className="relative p-2.5 rounded-xl bg-[#121220] hover:bg-[#18182a] text-slate-300 hover:text-rose-400 border border-white/10 transition-all"
+            title="Midnight Stash"
+          >
+            <Heart className="w-4 h-4" />
+            {wishlistCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[16px] h-4 px-1 text-[9.5px] font-black font-mono bg-rose-500 text-white rounded-full">
+                {wishlistCount}
+              </span>
+            )}
+          </button>
+
+          {/* Notifications Bell */}
+          <button
+            onClick={() => setIsNotificationsModalOpen(true)}
+            className="relative p-2.5 rounded-xl bg-[#121220] hover:bg-[#18182a] text-slate-300 hover:text-[#bef264] border border-white/10 transition-all"
+            title="Midnight Alerts"
+          >
+            <Bell className="w-4 h-4" />
+            {unreadNotificationsCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[16px] h-4 px-1 text-[9.5px] font-black font-mono bg-[#a3e635] text-black rounded-full">
+                {unreadNotificationsCount}
+              </span>
+            )}
+          </button>
+
+          {/* User Profile / Login Avatar */}
+          <button
+            onClick={handleUserClick}
+            className="flex items-center gap-1.5 p-2 px-2.5 rounded-xl bg-[#121220] hover:bg-[#18182a] text-slate-200 border border-white/10 hover:border-[#a3e635]/40 transition-all"
+            title={user?.isLoggedIn ? 'View Profile' : 'Login / Sign Up'}
+          >
+            <span className="text-sm">{user?.isLoggedIn ? user.avatar || '🌙' : '👤'}</span>
+            <span className="text-xs font-mono font-bold hidden md:inline truncate max-w-[80px]">
+              {user?.isLoggedIn ? user.name?.split(' ')[0] : 'Login'}
+            </span>
+          </button>
+
+          {/* Cart Trigger */}
           <button
             onClick={() => setIsCartOpen(true)}
             className="relative flex items-center gap-2 bg-[#121220] hover:bg-[#18182a] text-white px-3 py-2 rounded-xl border border-white/10 hover:border-[#a3e635]/50 transition-all shadow-md group"
@@ -146,14 +213,6 @@ export const Navbar = () => {
             </span>
           </button>
 
-          <a
-            href="#store"
-            className="hidden sm:inline-flex items-center gap-1.5 btn-primary px-3.5 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider"
-          >
-            <Zap className="w-3 h-3 fill-current" />
-            Order Now
-          </a>
-
           {/* Mobile hamburger menu toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -165,36 +224,24 @@ export const Navbar = () => {
         </div>
       </nav>
 
-      {/* Mobile Drawer Menu with Mobile Search */}
+      {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-[#080810]/98 backdrop-blur-2xl border-b border-white/10 px-4 py-5 space-y-4 animate-in slide-in-from-top duration-200">
           
-          {/* Mobile Search Bar */}
-          <div className="relative w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              placeholder="Search chips, ₹10 spices, Red Bull..."
-              className="w-full bg-[#121222] border border-white/20 text-xs font-mono text-white placeholder-slate-500 rounded-xl pl-9 pr-8 py-3 outline-none focus:border-[#a3e635]"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
           <div className="flex items-center justify-between pb-3 border-b border-white/10 text-xs font-mono">
             <span className="text-[#a3e635] flex items-center gap-1.5 font-bold">
               <span className="w-2 h-2 rounded-full bg-[#a3e635] animate-pulse"></span>
               9 PM — 6 AM • PILOT LIVE
             </span>
-            <span className="text-slate-400">Greater Noida</span>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setIsAddressModalOpen(true);
+              }}
+              className="text-slate-300 underline"
+            >
+              {activeAddress?.sector?.split(' ')[0] || 'Greater Noida'} ▾
+            </button>
           </div>
           
           <div className="grid grid-cols-2 gap-2 text-sm font-semibold">
@@ -205,38 +252,71 @@ export const Navbar = () => {
             >
               🌙 Midnight Store
             </a>
-            <a
-              href="#open-box-usp"
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-3 bg-[#10101c] rounded-xl text-[#a3e635] flex items-center gap-2 text-xs"
-            >
-              <ShieldCheck className="w-4 h-4" /> Open-Box USP
-            </a>
-            <a
-              href="#coverage"
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-3 bg-[#10101c] rounded-xl text-slate-200 flex items-center gap-2 text-xs"
-            >
-              📍 Greater Noida Map
-            </a>
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
-                openHub('manifesto');
+                setIsPaymentModalOpen(true);
+              }}
+              className="p-3 bg-[#10101c] rounded-xl text-[#bef264] flex items-center gap-2 text-left text-xs"
+            >
+              💳 Payment Sheet
+            </button>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setIsOrdersModalOpen(true);
+              }}
+              className="p-3 bg-[#10101c] rounded-xl text-slate-200 flex items-center gap-2 text-left text-xs"
+            >
+              📦 Past Orders
+            </button>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setIsWishlistModalOpen(true);
+              }}
+              className="p-3 bg-[#10101c] rounded-xl text-rose-300 flex items-center gap-2 text-left text-xs"
+            >
+              ❤️ Midnight Stash ({wishlistCount})
+            </button>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setIsShareModalOpen(true);
               }}
               className="p-3 bg-purple-950/40 text-purple-300 rounded-xl flex items-center gap-2 text-left text-xs"
             >
-              <Sparkles className="w-4 h-4 text-[#a3e635]" /> Inside Hub
+              <Gift className="w-4 h-4 text-[#a78bfa]" /> Refer & Earn ₹50
+            </button>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setIsAboutModalOpen(true);
+              }}
+              className="p-3 bg-[#10101c] rounded-xl text-slate-200 flex items-center gap-2 text-left text-xs"
+            >
+              <Info className="w-4 h-4 text-[#a3e635]" /> About Us
+            </button>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setIsHelpModalOpen(true);
+              }}
+              className="p-3 bg-[#10101c] rounded-xl text-slate-200 flex items-center gap-2 text-left text-xs col-span-2"
+            >
+              <HelpCircle className="w-4 h-4 text-blue-400" /> 24/7 Help & Night Support
             </button>
           </div>
 
-          <a
-            href="#store"
-            onClick={() => setMobileMenuOpen(false)}
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setIsCartOpen(true);
+            }}
             className="w-full btn-primary py-3 rounded-xl text-center block text-xs uppercase tracking-widest font-black"
           >
-            ORDER AFTER 9 NOW →
-          </a>
+            OPEN MIDNIGHT BAG ({totalItemsCount}) →
+          </button>
         </div>
       )}
     </header>
