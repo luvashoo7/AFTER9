@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { SAMPLE_REVIEWS } from '../data/products';
 import { 
   X, Star, ShieldCheck, Clock, ShoppingBag, Heart, 
   Check, ThumbsUp, Send, Sparkles, Tag, Plus, Minus 
@@ -45,8 +44,7 @@ export const ProductDetailModal = () => {
   // All Reviews for this product
   const allReviews = useMemo(() => {
     if (!product) return [];
-    const defaults = SAMPLE_REVIEWS[product.id] || [];
-    return [...userReviews.filter((r) => r.productId === product.id), ...defaults];
+    return [...userReviews.filter((r) => r.productId === product.id), ...(product.reviews || [])];
   }, [product, userReviews]);
 
   if (!product) return null;

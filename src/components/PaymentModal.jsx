@@ -12,7 +12,7 @@ export const PaymentModal = () => {
     tipAmount, setTipAmount, appliedDiscount, total, promoCode, setPromoCode, 
     applyPromo, promoMessage, placeOrder 
   } = useCart();
-  const { activeAddress, setIsAddressModalOpen, user } = useAuth();
+  const { activeAddress, setIsAddressModalOpen, user, openLoginModal } = useAuth();
 
   const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi' | 'card' | 'doorstep' | 'wallet'
   const [upiApp, setUpiApp] = useState('gpay'); // 'gpay' | 'phonepe' | 'paytm' | 'custom'
@@ -31,18 +31,19 @@ export const PaymentModal = () => {
     }
   };
 
-  const effectiveItems = cart.length > 0 ? cart : [
-    { id: 'demo-1', name: 'Red Bull Energy Drink (Pack of 4)', price: 460, mrp: 500, quantity: 1, image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=500&auto=format&fit=crop&q=60' },
-    { id: 'demo-2', name: 'Doritos Sizzlin\' Hot Nachos', price: 50, mrp: 55, quantity: 2, image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=500&auto=format&fit=crop&q=60' }
-  ];
-
-  const effectiveSubtotal = cart.length > 0 ? subtotal : 560;
-  const effectiveDeliveryFee = cart.length > 0 ? deliveryFee : 0;
+  const effectiveItems = cart;
+  const effectiveSubtotal = subtotal;
+  const effectiveDeliveryFee = deliveryFee;
   const rawTotal = effectiveSubtotal + effectiveDeliveryFee + tipAmount - appliedDiscount;
   const walletDeduction = useWallet ? Math.min(rawTotal, user?.walletBalance || 0) : 0;
   const finalTotal = Math.max(0, rawTotal - walletDeduction);
 
   const handleConfirmOrder = () => {
+    if (!user?.isLoggedIn) {
+      setIsPaymentModalOpen(false);
+      openLoginModal();
+      return;
+    }
     placeOrder({
       sector: activeAddress?.sector || 'Pari Chowk Central Hub',
       address: activeAddress,

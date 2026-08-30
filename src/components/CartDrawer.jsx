@@ -22,7 +22,7 @@ export const CartDrawer = () => {
     setIsPaymentModalOpen,
   } = useCart();
 
-  const { activeAddress, setIsAddressModalOpen } = useAuth();
+  const { activeAddress, setIsAddressModalOpen, user, openLoginModal } = useAuth();
   const [inputPromo, setInputPromo] = useState('');
 
   if (!isCartOpen) return null;
@@ -36,6 +36,11 @@ export const CartDrawer = () => {
 
   const handleProceedToPayment = () => {
     if (cart.length === 0) return;
+    if (!user?.isLoggedIn) {
+      setIsCartOpen(false);
+      openLoginModal();
+      return;
+    }
     setIsCartOpen(false);
     setIsPaymentModalOpen(true);
   };

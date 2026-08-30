@@ -1,22 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sparkles, Coins, Plus, ArrowRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { PRODUCTS } from '../data/products';
+import { productService } from '../services/productService';
 
 export const SmallPacksSection = () => {
   const { addToCart } = useCart();
-  
-  // Filter products in ₹10 Corner
-  const tenRupeeItems = PRODUCTS.filter((p) => p.category === 'ten-rupee');
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    productService
+      .listProducts({ limit: 10 })
+      .then((res) => {
+        const list = Array.isArray(res?.data)
+          ? res.data
+          : res?.data?.products || (Array.isArray(res) ? res : []);
+        if (list.length > 0) {
+          const smallPacks = list.filter((p) => (p.price || 0) <= 50);
+          setItems(smallPacks);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  if (items.length === 0) {
+    return null; // Clean: Don't render empty small packs section if none configured in backend
+  }
 
   return (
     <section id="ten-rupee" className="py-20 relative overflow-hidden bg-gradient-to-b from-[#06060a] via-[#0b0b14] to-[#06060a]">
-      
       {/* Background radial blur */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[#a3e635]/05 blur-[140px] pointer-events-none rounded-full"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 space-y-12">
-        
         {/* Section Header */}
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 pb-6 border-b border-white/10">
           <div className="space-y-3 max-w-2xl">
@@ -45,9 +60,9 @@ export const SmallPacksSection = () => {
           </div>
         </div>
 
-        {/* Product Cards Grid for ₹10 Corner */}
+        {/* Product Cards Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          {tenRupeeItems.map((item) => (
+          {items.map((item) => (
             <div
               key={item.id}
               className="glass-card rounded-2xl p-4 flex flex-col justify-between group border border-white/10 hover:border-[#a3e635]/50 transition-all shadow-lg"
@@ -55,17 +70,17 @@ export const SmallPacksSection = () => {
               <div>
                 <div className="relative aspect-square rounded-xl overflow-hidden mb-3 bg-[#080810]">
                   <img
-                    src={item.image}
-                    alt={item.name}
+                    src={item.imageUrl || item.image}
+                    alt={item.title || item.name}
                     className="w-full h-full object-cover group-hover:scale-106 transition-transform duration-300"
                   />
                   <div className="absolute top-2 left-2 bg-[#a3e635] text-[#06060a] font-mono font-black text-[10px] px-2 py-0.5 rounded shadow">
-                    ₹10 ONLY
+                    ₹{item.price} ONLY
                   </div>
                 </div>
 
                 <h3 className="font-display font-bold text-sm text-white line-clamp-2 mb-1 group-hover:text-[#bef264] transition-colors">
-                  {item.name}
+                  {item.title || item.name}
                 </h3>
                 <p className="text-[11px] font-mono text-slate-400 mb-2">{item.unit}</p>
               </div>
@@ -75,7 +90,14 @@ export const SmallPacksSection = () => {
                   <span className="font-display font-black text-lg text-white">₹{item.price}</span>
                 </div>
                 <button
-                  onClick={() => addToCart(item)}
+                  onClick={() => addToCart({
+                    id: item.id,
+                    name: item.title || item.name,
+                    price: item.price,
+                    mrp: item.mrp || item.price,
+                    image: item.imageUrl || item.image,
+                    unit: item.unit,
+                  })}
                   className="bg-[#a3e635] hover:bg-[#bef264] text-[#06060a] p-2 rounded-xl font-black transition-all hover:scale-105 active:scale-95 shadow-lime-glow"
                   title="Add to Midnight Bag"
                 >
@@ -98,7 +120,6 @@ export const SmallPacksSection = () => {
             View All Categories <ArrowRight className="w-3.5 h-3.5" />
           </a>
         </div>
-
       </div>
     </section>
   );

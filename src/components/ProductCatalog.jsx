@@ -1,13 +1,17 @@
-import React, { useState, useMemo } from 'react';
-import { CATEGORIES, PRODUCTS, TONIGHT_DROPS, SORT_OPTIONS_CONFIG, AVAILABLE_PRODUCT_TAGS } from '../data/products';
+import React, { useState, useMemo, useEffect } from 'react';
+import { CATEGORIES as DEFAULT_CATEGORIES, PRODUCTS as DEFAULT_PRODUCTS, TONIGHT_DROPS, SORT_OPTIONS_CONFIG, AVAILABLE_PRODUCT_TAGS } from '../data/products';
+import { productService } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { FilterSortModal } from './FilterSortModal';
 import { 
   Plus, Minus, Star, Clock, Flame, Coins, Sparkles, Check, 
-  Search, ShieldCheck, ArrowRight, Layers, Tag, Heart, SlidersHorizontal, ShoppingBag 
+  Search, ShieldCheck, ArrowRight, Layers, Tag, Heart, SlidersHorizontal, ShoppingBag, Loader2 
 } from 'lucide-react';
+
+import { useDebounce } from '../hooks/useDebounce';
+import { fuzzySearch } from '../utils/fuzzySearch';
 
 const INITIAL_FILTERS = {
   sortBy: 'popular',
@@ -22,10 +26,54 @@ export const ProductCatalog = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [liveProducts, setLiveProducts] = useState(null);
+  const [liveCategories, setLiveCategories] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const { addToCart, cart, updateQuantity, searchQuery, setSearchQuery } = useCart();
+  const debouncedSearchQuery = useDebounce(searchQuery, 280);
   const { openProductDetail } = useAuth();
   const { isInWishlist, toggleWishlist } = useWishlist();
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      productService.listProducts({ limit: 100 }).catch(() => null),
+      productService.listCategories().catch(() => null),
+    ])
+      .then(([productsRes, catsRes]) => {
+        const pList = Array.isArray(productsRes?.data)
+          ? productsRes.data
+          : productsRes?.data?.products || (Array.isArray(productsRes) ? productsRes : null);
+        if (pList !== null && pList !== undefined) {
+          setLiveProducts(pList);
+        }
+        const cList = Array.isArray(catsRes?.data)
+          ? catsRes.data
+          : (Array.isArray(catsRes) ? catsRes : null);
+        if (cList !== null && cList !== undefined) {
+          setLiveCategories(cList);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const CATEGORIES = useMemo(() => {
+    if (liveCategories && liveCategories.length > 0) {
+      const allTab = { id: 'all', name: 'All Drops', icon: '✨', itemCount: `${liveProducts?.length || 0} Items` };
+      const formattedCats = liveCategories.map((c) => ({
+        id: c.id || c.slug || c.name,
+        name: c.name,
+        slug: c.slug,
+        icon: c.icon || '🛍️',
+        badge: c.badge || 'Live Stock',
+      }));
+      return [allTab, ...formattedCats];
+    }
+    return DEFAULT_CATEGORIES;
+  }, [liveCategories, liveProducts]);
+
+  const PRODUCTS = liveProducts !== null ? liveProducts : DEFAULT_PRODUCTS;
 
   // Active filter count calculation
   const activeFilterCount = useMemo(() => {
@@ -63,20 +111,23 @@ export const ProductCatalog = () => {
 
     // Category Filter
     if (selectedCategory !== 'all') {
-      list = list.filter((p) => p.category === selectedCategory);
+      list = list.filter((p) => {
+        const catId = typeof p.category === 'object' ? p.category?.id : p.categoryId;
+        const catName = typeof p.category === 'object' ? p.category?.name : p.category;
+        const catSlug = typeof p.category === 'object' ? p.category?.slug : p.category;
+        return (
+          catId === selectedCategory ||
+          catName === selectedCategory ||
+          catSlug === selectedCategory ||
+          (catName && selectedCategory && catName.toLowerCase() === selectedCategory.toLowerCase()) ||
+          (catSlug && selectedCategory && catSlug.toLowerCase() === selectedCategory.toLowerCase())
+        );
+      });
     }
 
-    // Search Query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter((p) =>
-        p.name?.toLowerCase().includes(q) ||
-        p.title?.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q) ||
-        p.category?.toLowerCase().includes(q) ||
-        (Array.isArray(p.tags) && p.tags.some((t) => t.toLowerCase().includes(q))) ||
-        (p.tag && p.tag.toLowerCase().includes(q))
-      );
+    // Debounced Fuzzy & Elastic Search
+    if (debouncedSearchQuery.trim()) {
+      list = fuzzySearch(list, debouncedSearchQuery);
     }
 
     // Tags Filter
@@ -157,7 +208,7 @@ export const ProductCatalog = () => {
     }
 
     return sorted;
-  }, [selectedCategory, searchQuery, filters]);
+  }, [PRODUCTS, selectedCategory, debouncedSearchQuery, filters]);
 
   const getItemQuantityInCart = (id) => {
     const item = cart.find((i) => i.id === id || i.cartKey?.startsWith(id));
@@ -460,7 +511,7 @@ export const ProductCatalog = () => {
                     <div className="space-y-3">
                       <div className="relative rounded-2xl overflow-hidden aspect-square bg-[#0c0d18] border border-white/5 flex items-center justify-center">
                         <img
-                          src={prod.image}
+                          src={prod.imageUrl || prod.image}
                           alt={prod.name || prod.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
@@ -492,7 +543,7 @@ export const ProductCatalog = () => {
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
                           <span className="text-[#bef264]">⚡ {prod.deliveryMins || '10-15m'}</span>
-                          <span>{prod.unit}</span>
+                          <span>{prod.unit || prod.variants?.[0]?.unit || '1 unit'}</span>
                         </div>
 
                         <h3 className="font-display font-bold text-xs sm:text-sm text-white uppercase line-clamp-2 leading-tight">
@@ -517,12 +568,16 @@ export const ProductCatalog = () => {
                     <div className="pt-3 border-t border-white/5 flex items-center justify-between gap-2 mt-3">
                       <div>
                         <div className="flex items-baseline gap-1.5">
-                          <span className="font-display font-black text-base text-[#a3e635]">₹{prod.price}</span>
-                          {prod.mrp && prod.mrp > prod.price && (
-                            <span className="text-[10px] text-slate-500 line-through font-mono">₹{prod.mrp}</span>
+                          <span className="font-display font-black text-base text-[#a3e635]">
+                            ₹{prod.price !== undefined ? prod.price : (prod.variants?.[0]?.price || 0)}
+                          </span>
+                          {(prod.mrp || prod.variants?.[0]?.mrp) && (prod.mrp || prod.variants?.[0]?.mrp) > (prod.price !== undefined ? prod.price : (prod.variants?.[0]?.price || 0)) && (
+                            <span className="text-[10px] text-slate-500 line-through font-mono">
+                              ₹{prod.mrp || prod.variants?.[0]?.mrp}
+                            </span>
                           )}
                         </div>
-                        {hasVariants && (
+                        {hasVariants && prod.variants.length > 1 && (
                           <span className="text-[9px] font-mono text-purple-300">
                             {prod.variants.length} options
                           </span>
@@ -555,7 +610,7 @@ export const ProductCatalog = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (hasVariants) {
+                            if (prod.variants && prod.variants.length > 1) {
                               openProductDetail(prod);
                             } else {
                               addToCart(prod);
@@ -564,7 +619,7 @@ export const ProductCatalog = () => {
                           className="btn-primary p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-black uppercase flex items-center gap-1 shadow-lime-glow"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">{hasVariants ? 'Options' : 'ADD'}</span>
+                          <span className="hidden sm:inline">{prod.variants && prod.variants.length > 1 ? 'Options' : 'ADD'}</span>
                         </button>
                       )}
                     </div>

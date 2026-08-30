@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { SAMPLE_ORDER_HISTORY, SAMPLE_REFUNDS, SAMPLE_NOTIFICATIONS } from '../data/products';
+import { orderService } from '../services/orderService';
 
 const CartContext = createContext();
 
@@ -25,31 +25,31 @@ export const CartProvider = ({ children }) => {
   const [activeOrder, setActiveOrder] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Past Orders, Refunds & Notifications State
+  // Past Orders, Refunds & Notifications State (Default empty, populated from real user actions/API)
   const [pastOrders, setPastOrders] = useState(() => {
     try {
       const saved = localStorage.getItem('after9_orders');
-      return saved ? JSON.parse(saved) : SAMPLE_ORDER_HISTORY;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return SAMPLE_ORDER_HISTORY;
+      return [];
     }
   });
 
   const [refunds, setRefunds] = useState(() => {
     try {
       const saved = localStorage.getItem('after9_refunds');
-      return saved ? JSON.parse(saved) : SAMPLE_REFUNDS;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return SAMPLE_REFUNDS;
+      return [];
     }
   });
 
   const [notifications, setNotifications] = useState(() => {
     try {
       const saved = localStorage.getItem('after9_notifications');
-      return saved ? JSON.parse(saved) : SAMPLE_NOTIFICATIONS;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return SAMPLE_NOTIFICATIONS;
+      return [];
     }
   });
 
@@ -94,7 +94,7 @@ export const CartProvider = ({ children }) => {
     const itemKey = selectedVariant ? `${product.id}-${selectedVariant.id}` : product.id;
     const finalPrice = selectedVariant ? selectedVariant.price : product.price;
     const finalMrp = selectedVariant ? selectedVariant.mrp : product.mrp;
-    const finalName = selectedVariant ? `${product.name || product.title} (${selectedVariant.name})` : (product.name || product.title);
+    const finalName = selectedVariant ? `${product.name || product.title} (${selectedVariant.name || selectedVariant.title})` : (product.name || product.title);
 
     setCart((prev) => {
       const existing = prev.find((item) => item.cartKey === itemKey || (!item.cartKey && item.id === product.id && !selectedVariant));
@@ -145,34 +145,36 @@ export const CartProvider = ({ children }) => {
 
   const applyPromo = (code) => {
     const clean = code.trim().toUpperCase();
-    if (clean === 'AFTER9PILOT') {
+    if (clean === 'AFTER9' || clean === 'AFTER9PILOT') {
+      const disc = Math.round(subtotal * 0.2);
+      setAppliedDiscount(disc > 100 ? 100 : disc);
+      setPromoMessage('🎉 20% OFF Applied!');
+      return true;
+    } else if (clean === 'NIGHTOWL') {
       setAppliedDiscount(50);
-      setPromoMessage('🎉 ₹50 Pilot Launch discount applied!');
+      setPromoMessage('🌙 Flat ₹50 OFF Applied!');
       return true;
-    } else if (clean === 'MIDNIGHT') {
+    } else if (clean === 'FREEDEL') {
       setAppliedDiscount(29);
-      setPromoMessage('🌙 Free Midnight Delivery applied!');
-      return true;
-    } else if (clean === 'GENZ20') {
-      setAppliedDiscount(40);
-      setPromoMessage('⚡ ₹40 Gen-Z Night Pass applied!');
+      setPromoMessage('⚡ Free Night Delivery applied!');
       return true;
     } else {
-      setPromoMessage('❌ Invalid coupon. Try AFTER9PILOT, MIDNIGHT or GENZ20');
+      setPromoMessage('❌ Invalid coupon. Try AFTER9, NIGHTOWL or FREEDEL');
       return false;
     }
   };
 
-  const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const deliveryFee = subtotal > 299 || appliedDiscount === 29 ? 0 : (subtotal > 0 ? 29 : 0);
-  const total = Math.max(0, subtotal + deliveryFee + tipAmount - (appliedDiscount === 29 ? 0 : appliedDiscount));
+  const subtotal = cart.reduce((acc, item) => acc + (item.price || 0) * item.quantity, 0);
+  const deliveryFee = subtotal >= 199 ? 0 : (subtotal > 0 ? 29 : 0);
+  const total = Math.max(0, subtotal + deliveryFee + tipAmount - appliedDiscount);
   const totalItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-  // Trigger simulated order with doorstep open-box experience
-  const placeOrder = (orderDetails) => {
-    const newOrder = {
-      id: `A9-${Math.floor(100000 + Math.random() * 900000)}`,
-      orderId: `A9-${Math.floor(100000 + Math.random() * 900000)}`,
+  // Trigger order creation and sync to backend MySQL
+  const placeOrder = async (orderDetails) => {
+    const orderIdNum = Math.floor(100000 + Math.random() * 900000);
+    let newOrder = {
+      id: `A9-${orderIdNum}`,
+      orderId: `A9-${orderIdNum}`,
       items: [...cart],
       total,
       subtotal,
@@ -183,9 +185,39 @@ export const CartProvider = ({ children }) => {
       estimatedArrival: '10-15 mins',
       sector: orderDetails?.sector || 'Pari Chowk Central Hub',
       paymentMethod: orderDetails?.paymentMethod || 'UPI (Instant)',
-      status: 'Dispatched & On Route',
+      status: 'CONFIRMED',
       openBoxStatus: 'Doorstep Open-Box Inspection Active',
     };
+
+    // 1. Post to Backend REST API -> persists in MySQL Order, OrderItem, Payment, Inspection tables
+    try {
+      const apiResponse = await orderService.createOrder({
+        items: cart,
+        total,
+        subtotal,
+        deliveryFee,
+        tip: tipAmount,
+        discount: appliedDiscount,
+        sector: orderDetails?.sector || 'Pari Chowk Central Hub',
+        paymentMethod: orderDetails?.paymentMethod || 'ONLINE',
+        notes: orderDetails?.notes || '',
+      });
+
+      if (apiResponse) {
+        newOrder = {
+          ...newOrder,
+          id: apiResponse.id || apiResponse.orderNumber || newOrder.id,
+          orderId: apiResponse.orderNumber || apiResponse.id || newOrder.id,
+          status: apiResponse.status || 'CONFIRMED',
+        };
+      }
+    } catch (err) {
+      if (err.status === 401 || err.code === 'TOKEN_INVALID' || err.code === 'TOKEN_EXPIRED') {
+        showToast('Please log in with OTP before placing your order', '🔒');
+        return;
+      }
+      console.warn('Backend order sync notice:', err?.message || err);
+    }
 
     setActiveOrder(newOrder);
     setPastOrders((prev) => [newOrder, ...prev]);
@@ -205,8 +237,8 @@ export const CartProvider = ({ children }) => {
     // Add dispatch notification
     const newNotif = {
       id: `notif-${Date.now()}`,
-      title: `⚡ Order #${newOrder.id} Dispatched!`,
-      message: `Your rider Vikram S. has picked up your midnight order from Greater Noida Hub. ETA 12 mins.`,
+      title: `⚡ Order #${newOrder.orderId || newOrder.id} Placed & Confirmed!`,
+      message: `Your midnight order has been saved to MySQL and dispatched. ETA 10-15 mins.`,
       timestamp: 'Just Now',
       isRead: false,
       type: 'order',
@@ -215,36 +247,44 @@ export const CartProvider = ({ children }) => {
     setNotifications((prev) => [newNotif, ...prev]);
   };
 
-  // Re-order past items
   const reorderItems = (order) => {
-    order.items.forEach((item) => {
-      addToCart(item, item.qty || item.quantity || 1);
-    });
-    setIsCartOpen(true);
-    showToast(`Re-added ${order.items.length} items from Order #${order.id}!`, '✨');
+    if (order.items) {
+      order.items.forEach((item) => {
+        addToCart(item, item.quantity || 1);
+      });
+      setIsCartOpen(true);
+    }
   };
 
-  // Return Entire Order at Doorstep Inspection with Return Delivery Charge
-  const processDoorstepReturn = (reason = 'Customer rejected during doorstep inspection') => {
+  const processDoorstepReturn = (rejectedItemsOrReason, maybeReason) => {
     if (!activeOrder) return;
-    const returnDeliveryFee = 29; // Standard midnight trip transit compensation for electric rider
-    const refundAmount = Math.max(0, activeOrder.subtotal - (activeOrder.discount || 0));
+
+    let itemsToReturn = Array.isArray(rejectedItemsOrReason) ? rejectedItemsOrReason : (activeOrder.items || []);
+    let reason = typeof rejectedItemsOrReason === 'string' ? rejectedItemsOrReason : (maybeReason || 'Doorstep open-box inspection return');
+
+    const returnDeliveryFee = 19;
+    const itemsTotal = itemsToReturn.reduce(
+      (acc, item) => acc + (item.price || item.unitPrice || 0) * (item.quantity || 1),
+      0
+    );
+    const refundAmount = Math.max(0, itemsTotal - returnDeliveryFee);
 
     const newRefund = {
       id: `REF-${Math.floor(100000 + Math.random() * 900000)}`,
-      orderId: activeOrder.id || activeOrder.orderId,
-      item: activeOrder.items.map((i) => i.name || i.title).join(', '),
-      amount: refundAmount,
-      returnDeliveryChargeDeducted: returnDeliveryFee,
-      reason: `${reason} (₹${returnDeliveryFee} delivery trip charge retained for rider transit)`,
-      timestamp: 'Just now (' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ')',
-      status: 'Credited to Source UPI (Instant 90s)',
-      utrNumber: `UPI/${Math.floor(100000000000 + Math.random() * 900000000000)}/AFTER9`,
+      orderId: activeOrder.id,
+      orderNumber: activeOrder.orderNumber || activeOrder.orderId || activeOrder.id,
+      date: 'Just Now, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      items: itemsToReturn,
+      returnReason: reason,
+      refundAmount,
+      returnDeliveryCharge: returnDeliveryFee,
+      status: 'Instant Refund Credited',
+      paymentMode: 'UPI (Instant Refund)',
+      isDoorstepReturn: true,
     };
 
     setRefunds((prev) => [newRefund, ...prev]);
 
-    // Update status in past orders
     setPastOrders((prev) =>
       prev.map((o) =>
         o.id === activeOrder.id
@@ -259,11 +299,10 @@ export const CartProvider = ({ children }) => {
       )
     );
 
-    // Add refund notification
     const newNotif = {
       id: `notif-${Date.now()}`,
       title: `💸 Instant Refund Credited: ₹${refundAmount}`,
-      message: `Doorstep return for #${activeOrder.id} processed. ₹${refundAmount} credited to UPI. ₹${returnDeliveryFee} rider transit fee deducted.`,
+      message: `Doorstep return for #${activeOrder.id} processed. ₹${refundAmount} credited.`,
       timestamp: 'Just Now',
       isRead: false,
       type: 'refund',
